@@ -399,7 +399,7 @@ with tab_alloc:
     st.subheader("Allocation Survival Heatmap")
     st.markdown("This analysis shows how **robust** different equity/bond allocations are by measuring the probability of finishing with a positive portfolio balance. Each cell represents a full Monte Carlo run set.")
 
-    run_alloc = st.button("Run Allocation Heatmap Analysis")
+    run_alloc = st.button("Run Allocation Heatmap Analysis", key="run_alloc_engine")
 
     if run_alloc:
         eq_weights = np.linspace(0.2, 0.8, 7)
@@ -410,6 +410,7 @@ with tab_alloc:
                 w_liq = (w_liq_eq, 1 - w_liq_eq, 0)
                 w_ret = (w_ret_eq, 1 - w_ret_eq, 0)
                 _, finals = run_simulation(
+                    sims,
                     override_liq_alloc=w_liq,
                     override_ret_alloc=w_ret
                 )
