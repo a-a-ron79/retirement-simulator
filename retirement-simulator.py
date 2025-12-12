@@ -277,15 +277,15 @@ with tab_overview:
     st.markdown("ℹ️ **Fan Chart:** Shaded bands show the range of possible portfolio paths over time. The darker band represents the middle 60% of outcomes (20–80%), while the lighter band shows more extreme scenarios (10–90%).")
     st.subheader("Portfolio Projection — Confidence Bands")
 
-    # Use dynamic length to avoid shape mismatches
-years = np.arange(len(p50_path))
-
-    # Compute percentiles across simulations
+    # Compute percentile paths
     p10_path = np.percentile(results, 10, axis=0)
     p20_path = np.percentile(results, 20, axis=0)
     p50_path = np.percentile(results, 50, axis=0)
     p80_path = np.percentile(results, 80, axis=0)
     p90_path = np.percentile(results, 90, axis=0)
+
+    # X-axis derived from data length (robust to refactors)
+    years = np.arange(len(p50_path))
 
     plt.figure(figsize=(10, 6))
 
