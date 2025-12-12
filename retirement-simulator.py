@@ -277,7 +277,8 @@ with tab_overview:
     st.markdown("ℹ️ **Fan Chart:** Shaded bands show the range of possible portfolio paths over time. The darker band represents the middle 60% of outcomes (20–80%), while the lighter band shows more extreme scenarios (10–90%).")
     st.subheader("Portfolio Projection — Confidence Bands")
 
-    years = np.arange(total_years)
+    # Use dynamic length to avoid shape mismatches
+years = np.arange(len(p50_path))
 
     # Compute percentiles across simulations
     p10_path = np.percentile(results, 10, axis=0)
@@ -427,100 +428,7 @@ with tab_alloc:
         st.pyplot(plt)
 
 
-with tab_alloc:
-    st.subheader("Allocation Survival Heatmap")
-    st.markdown("This analysis shows how **robust** different equity/bond allocations are by measuring the probability of finishing with a positive portfolio balance. Each cell represents a full Monte Carlo run set.")
-
-    run_alloc = st.button("Run Allocation Heatmap Analysis")
-
-    if run_alloc:
-        eq_weights = np.linspace(0.2, 0.8, 7)
-        bd_weights = 1 - eq_weights
-
-        survival = np.zeros((len(eq_weights), len(eq_weights)))
-
-        for i, w_eq in enumerate(eq_weights):
-            for j, w_eq_ret in enumerate(eq_weights):
-                finals = []
-                for _ in range(sims):
-                    liquid_balance = liquid_init
-                    retirement_balance = retirement_init
-
-                    for year in range(total_years):
-                        age = current_age + year
-                        spend = annual_spending * ((1 + spending_inflation_rate) ** (age - current_age))
-                        income = annual_income if age < retire_age else 0
-                        tax_rate = retire_tax_rate if age >= retire_age else work_tax_rate
-
-                        taxable_income = 0
-                        if age >= start_ssi_age:
-                            years_since_now = age - current_age
-                            inflated_ssi = ssi_amount_today * ((1 + ssi_inflation_rate) ** years_since_now)
-                            income += inflated_ssi
-                            if include_ssi_taxable:
-                                taxable_income += inflated_ssi
-
-                        taxable_income += income
-                        tax = taxable_income * tax_rate
-                        income_after_tax = income - tax
-
-                        if age >= retire_age and income_after_tax < spend:
-                            withdraw_needed_tax_basis = spend - income_after_tax
-                            tax_adj = 1 + (retire_tax_rate * 0.5)
-                            spend = income_after_tax + withdraw_needed_tax_basis * tax_adj
-
-                        rand = np.random.normal(0, 1, 3)
-                        correlated = chol @ rand
-                        eq_ret = np.exp(mu_eq_ln + sigma_eq_ln * correlated[0]) - 1
-                        bd_ret = mean_bonds + correlated[1] * std_bonds
-                        cs_ret = np.maximum(0, mean_cash + correlated[2] * std_cash)
-
-                        liq_growth = w_eq * eq_ret + bd_weights[i] * bd_ret
-                        ret_growth = w_eq_ret * eq_ret + bd_weights[j] * bd_ret
-
-                        mid_liq = (1 + liq_growth) ** 0.5 - 1
-                        mid_ret = (1 + ret_growth) ** 0.5 - 1
-
-                        liquid_balance *= (1 + mid_liq)
-                        retirement_balance *= (1 + mid_ret)
-
-                        surplus = max(0, income_after_tax - spend)
-                        deficit = max(0, spend - income_after_tax)
-
-                        if surplus > 0:
-                            liquid_balance += surplus
-
-                        if deficit > 0:
-                            withdraw_remaining = deficit
-                            if liquid_balance >= withdraw_remaining:
-                                liquid_balance -= withdraw_remaining
-                                withdraw_remaining = 0
-                            else:
-                                withdraw_remaining -= liquid_balance
-                                liquid_balance = 0
-                            if withdraw_remaining > 0:
-                                if age < retirement_access_age:
-                                    gross_from_ret = withdraw_remaining * (1 + early_withdraw_penalty_rate)
-                                else:
-                                    gross_from_ret = withdraw_remaining
-                                retirement_balance -= gross_from_ret
-
-                        liquid_balance *= (1 + mid_liq)
-                        retirement_balance *= (1 + mid_ret)
-
-                    finals.append(liquid_balance + retirement_balance)
-
-                survival[i, j] = np.mean(np.array(finals) > 0)
-
-        plt.figure(figsize=(8, 6))
-        plt.imshow(survival, origin='lower', cmap='viridis', aspect='auto')
-        plt.colorbar(label='Survival Probability')
-        plt.xticks(range(len(eq_weights)), [f"{int(w*100)}%" for w in eq_weights])
-        plt.yticks(range(len(eq_weights)), [f"{int(w*100)}%" for w in eq_weights])
-        plt.xlabel("Retirement Portfolio Equity Allocation")
-        plt.ylabel("Liquid Portfolio Equity Allocation")
-        plt.title("Allocation Survival Heatmap")
-        st.pyplot(plt)
+# (Removed legacy allocation heatmap block — replaced by engine-based version above)
 
 # --- Asset Contribution Breakdown Tab ---
 with tab_contrib:
