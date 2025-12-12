@@ -174,14 +174,14 @@ def run_simulation(
 
     results, final_balances = [], []
 
-    for _ in range(sims):
+        for _ in range(sims):
         liquid_balance = liquid_init
         retirement_balance = retirement_init
         path = []
 
         total_years_local = death_age - current_age
 
-    for year in range(total_years_local):
+        for year in range(total_years_local):
             age = current_age + year
 
             spend = spend_base * ((1 + spending_inflation_rate) ** (age - current_age))
@@ -208,7 +208,6 @@ def run_simulation(
                 tax_adj = 1 + (retire_tax_rate * 0.5)
                 spend = income_after_tax + withdraw_needed_tax_basis * tax_adj
 
-            # Recompute distribution + correlation setup inside the engine so caching responds to input changes
             mu_eq_ln_local = np.log(1 + mean_equity) - 0.5 * (std_equity ** 2)
             sigma_eq_ln_local = np.sqrt(np.log(1 + (std_equity ** 2)))
             corr_local = np.array([
