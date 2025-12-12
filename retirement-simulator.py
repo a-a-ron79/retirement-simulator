@@ -20,6 +20,14 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import matplotlib.cm as cm
 
+# --- Helpers ---
+def currency_formatter(x, pos):
+    if x >= 1_000_000:
+        return f"${x/1_000_000:.1f}M"
+    elif x >= 1_000:
+        return f"${x/1_000:.0f}K"
+    return f"${x:,.0f}"
+
 MAX_SIMS = 20000
 
 # Number of simulations
