@@ -22,6 +22,12 @@ import matplotlib.cm as cm
 
 MAX_SIMS = 20000
 
+# Number of simulations
+sims = int(st.text_input("Number of simulations (max 20,000)", value="1000"))
+if sims > MAX_SIMS:
+    sims = MAX_SIMS
+
+
 # --- Inputs ---
 liquid_init = float(st.text_input("Liquid / taxable portfolio ($)", value="600000"))
 retirement_init = float(st.text_input("Retirement portfolio ($)", value="400000"))
@@ -98,6 +104,8 @@ early_withdraw_penalty_rate = float(st.text_input("Early withdrawal penalty rate
 # Lump Sum Event
 receive_lump_age = int(st.text_input("Age when lump sum is received", value="70"))
 lump_amount_today = float(st.text_input("Lump sum amount ($)", value="100000"))
+
+total_years = death_age - current_age
 
 # --- Monte Carlo Engine ---
 
@@ -232,7 +240,7 @@ tabs = st.tabs([
     "Sensitivity",
     "Allocation Heatmap",
     "Asset Contributions"
-])(["Overview", "Distributions", "Stress Scenarios", "Sensitivity", "Allocation Heatmap"])(["Overview", "Distributions", "Stress Scenarios", "Sensitivity"])(["Overview", "Distributions", "Stress Scenarios"])
+])
 
 tab_overview = tabs[0]
 tab_dist = tabs[1]
