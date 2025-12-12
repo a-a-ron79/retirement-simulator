@@ -128,13 +128,39 @@ chol = np.linalg.cholesky(corr)
 
 total_years = death_age - current_age
 
-total_years = death_age - current_age
-
 # --- Monte Carlo Engine ---
 
 @st.cache_data(show_spinner=False)
 def run_simulation(
     sims,
+    annual_spending,
+    spending_inflation_rate,
+    annual_income,
+    liquid_init,
+    retirement_init,
+    work_tax_rate,
+    retire_tax_rate,
+    start_ssi_age,
+    ssi_amount_today,
+    ssi_inflation_rate,
+    include_ssi_taxable,
+    retirement_access_age,
+    early_withdraw_penalty_rate,
+    mean_equity,
+    std_equity,
+    mean_bonds,
+    std_bonds,
+    mean_cash,
+    std_cash,
+    liq_eq_pre, liq_bd_pre, liq_cs_pre,
+    liq_eq_post, liq_bd_post, liq_cs_post,
+    ret_eq_pre, ret_bd_pre, ret_cs_pre,
+    ret_eq_post, ret_bd_post, ret_cs_post,
+    receive_lump_age,
+    lump_amount_today,
+    current_age,
+    retire_age,
+    death_age,
     annual_spending_override=None,
     override_liq_alloc=None,
     override_ret_alloc=None
@@ -153,7 +179,9 @@ def run_simulation(
         retirement_balance = retirement_init
         path = []
 
-        for year in range(total_years):
+        total_years_local = death_age - current_age
+
+    for year in range(total_years_local):
             age = current_age + year
 
             spend = spend_base * ((1 + spending_inflation_rate) ** (age - current_age))
@@ -180,9 +208,19 @@ def run_simulation(
                 tax_adj = 1 + (retire_tax_rate * 0.5)
                 spend = income_after_tax + withdraw_needed_tax_basis * tax_adj
 
+            # Recompute distribution + correlation setup inside the engine so caching responds to input changes
+            mu_eq_ln_local = np.log(1 + mean_equity) - 0.5 * (std_equity ** 2)
+            sigma_eq_ln_local = np.sqrt(np.log(1 + (std_equity ** 2)))
+            corr_local = np.array([
+                [1.0, 0.2, 0.0],
+                [0.2, 1.0, 0.1],
+                [0.0, 0.1, 1.0]
+            ])
+            chol_local = np.linalg.cholesky(corr_local)
+
             rand = np.random.normal(0, 1, 3)
-            correlated = chol @ rand
-            eq_ret = np.exp(mu_eq_ln + sigma_eq_ln * correlated[0]) - 1
+            correlated = chol_local @ rand
+            eq_ret = np.exp(mu_eq_ln_local + sigma_eq_ln_local * correlated[0]) - 1
             bd_ret = mean_bonds + correlated[1] * std_bonds
             cs_ret = np.maximum(0, mean_cash + correlated[2] * std_cash)
 
@@ -243,7 +281,37 @@ def run_simulation(
 
 
 # --- Run Base Simulation ---
-results, final_balances = run_simulation(sims)
+results, final_balances = run_simulation(
+    sims,
+    annual_spending,
+    spending_inflation_rate,
+    annual_income,
+    liquid_init,
+    retirement_init,
+    work_tax_rate,
+    retire_tax_rate,
+    start_ssi_age,
+    ssi_amount_today,
+    ssi_inflation_rate,
+    include_ssi_taxable,
+    retirement_access_age,
+    early_withdraw_penalty_rate,
+    mean_equity,
+    std_equity,
+    mean_bonds,
+    std_bonds,
+    mean_cash,
+    std_cash,
+    liq_eq_pre, liq_bd_pre, liq_cs_pre,
+    liq_eq_post, liq_bd_post, liq_cs_post,
+    ret_eq_pre, ret_bd_pre, ret_cs_pre,
+    ret_eq_post, ret_bd_post, ret_cs_post,
+    receive_lump_age,
+    lump_amount_today,
+    current_age,
+    retire_age,
+    death_age
+)
 
 # --- Results ---
 median_final = np.median(final_balances)
@@ -332,7 +400,7 @@ with tab_stress:
     st.markdown("This view highlights how *early* market outcomes shape long-term results. We compare paths with the **worst** and **best** early-period performance against the median.")
 
     # Define early window (first 5 years)
-    early_years = min(5, total_years)
+    early_years = min(5, results.shape[1])
 
     # Rank simulations by cumulative return over early window
     early_cum = results[:, early_years - 1]
@@ -378,7 +446,38 @@ with tab_sens:
         p20_vals, p50_vals, p80_vals = [], [], []
 
         for spend_test in spend_range:
-            _, finals = run_simulation(sims,annual_spending_override=spend_test)
+            _, finals = run_simulation(
+                sims,
+                annual_spending,
+                spending_inflation_rate,
+                annual_income,
+                liquid_init,
+                retirement_init,
+                work_tax_rate,
+                retire_tax_rate,
+                start_ssi_age,
+                ssi_amount_today,
+                ssi_inflation_rate,
+                include_ssi_taxable,
+                retirement_access_age,
+                early_withdraw_penalty_rate,
+                mean_equity,
+                std_equity,
+                mean_bonds,
+                std_bonds,
+                mean_cash,
+                std_cash,
+                liq_eq_pre, liq_bd_pre, liq_cs_pre,
+                liq_eq_post, liq_bd_post, liq_cs_post,
+                ret_eq_pre, ret_bd_pre, ret_cs_pre,
+                ret_eq_post, ret_bd_post, ret_cs_post,
+                receive_lump_age,
+                lump_amount_today,
+                current_age,
+                retire_age,
+                death_age,
+                annual_spending_override=spend_test
+            )
             p20_vals.append(np.percentile(finals, 20))
             p50_vals.append(np.percentile(finals, 50))
             p80_vals.append(np.percentile(finals, 80))
@@ -412,6 +511,34 @@ with tab_alloc:
                 w_ret = (w_ret_eq, 1 - w_ret_eq, 0)
                 _, finals = run_simulation(
                     sims,
+                    annual_spending,
+                    spending_inflation_rate,
+                    annual_income,
+                    liquid_init,
+                    retirement_init,
+                    work_tax_rate,
+                    retire_tax_rate,
+                    start_ssi_age,
+                    ssi_amount_today,
+                    ssi_inflation_rate,
+                    include_ssi_taxable,
+                    retirement_access_age,
+                    early_withdraw_penalty_rate,
+                    mean_equity,
+                    std_equity,
+                    mean_bonds,
+                    std_bonds,
+                    mean_cash,
+                    std_cash,
+                    liq_eq_pre, liq_bd_pre, liq_cs_pre,
+                    liq_eq_post, liq_bd_post, liq_cs_post,
+                    ret_eq_pre, ret_bd_pre, ret_cs_pre,
+                    ret_eq_post, ret_bd_post, ret_cs_post,
+                    receive_lump_age,
+                    lump_amount_today,
+                    current_age,
+                    retire_age,
+                    death_age,
                     override_liq_alloc=w_liq,
                     override_ret_alloc=w_ret
                 )
