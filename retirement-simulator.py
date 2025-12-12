@@ -103,6 +103,7 @@ lump_amount_today = float(st.text_input("Lump sum amount ($)", value="100000"))
 
 @st.cache_data(show_spinner=False)
 def run_simulation(
+    sims,
     annual_spending_override=None,
     override_liq_alloc=None,
     override_ret_alloc=None
@@ -211,7 +212,7 @@ def run_simulation(
 
 
 # --- Run Base Simulation ---
-results, final_balances = run_simulation()
+results, final_balances = run_simulation(sims)
 
 # --- Results ---
 median_final = np.median(final_balances)
@@ -224,7 +225,14 @@ success_rate = np.mean(np.array(final_balances) > 0) * 100
 # --- Visualizations ---
 
 # Create tabs for visual outputs
-tabs = st.tabs(["Overview", "Distributions", "Stress Scenarios", "Sensitivity", "Allocation Heatmap", "Asset Contributions"])(["Overview", "Distributions", "Stress Scenarios", "Sensitivity", "Allocation Heatmap"])(["Overview", "Distributions", "Stress Scenarios", "Sensitivity"])(["Overview", "Distributions", "Stress Scenarios"])
+tabs = st.tabs([
+    "Overview",
+    "Distributions",
+    "Stress Scenarios",
+    "Sensitivity",
+    "Allocation Heatmap",
+    "Asset Contributions"
+])(["Overview", "Distributions", "Stress Scenarios", "Sensitivity", "Allocation Heatmap"])(["Overview", "Distributions", "Stress Scenarios", "Sensitivity"])(["Overview", "Distributions", "Stress Scenarios"])
 
 tab_overview = tabs[0]
 tab_dist = tabs[1]
@@ -338,7 +346,7 @@ with tab_sens:
         p20_vals, p50_vals, p80_vals = [], [], []
 
         for spend_test in spend_range:
-            _, finals = run_simulation(annual_spending_override=spend_test)
+            _, finals = run_simulation(sims,annual_spending_override=spend_test)
             p20_vals.append(np.percentile(finals, 20))
             p50_vals.append(np.percentile(finals, 50))
             p80_vals.append(np.percentile(finals, 80))
