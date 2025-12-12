@@ -174,7 +174,7 @@ def run_simulation(
 
     results, final_balances = [], []
 
-        for _ in range(sims):
+    for _ in range(sims):
         liquid_balance = liquid_init
         retirement_balance = retirement_init
         path = []
@@ -210,11 +210,7 @@ def run_simulation(
 
             mu_eq_ln_local = np.log(1 + mean_equity) - 0.5 * (std_equity ** 2)
             sigma_eq_ln_local = np.sqrt(np.log(1 + (std_equity ** 2)))
-            corr_local = np.array([
-                [1.0, 0.2, 0.0],
-                [0.2, 1.0, 0.1],
-                [0.0, 0.1, 1.0]
-            ])
+            corr_local = np.array([[1.0, 0.2, 0.0], [0.2, 1.0, 0.1], [0.0, 0.1, 1.0]])
             chol_local = np.linalg.cholesky(corr_local)
 
             rand = np.random.normal(0, 1, 3)
