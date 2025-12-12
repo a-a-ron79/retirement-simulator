@@ -105,6 +105,21 @@ early_withdraw_penalty_rate = float(st.text_input("Early withdrawal penalty rate
 receive_lump_age = int(st.text_input("Age when lump sum is received", value="70"))
 lump_amount_today = float(st.text_input("Lump sum amount ($)", value="100000"))
 
+# --- Monte Carlo setup ---
+# Lognormal parameters for equities
+mu_eq_ln = np.log(1 + mean_equity) - 0.5 * (std_equity ** 2)
+sigma_eq_ln = np.sqrt(np.log(1 + (std_equity ** 2)))
+
+# Correlation & Cholesky decomposition (Equity, Bonds, Cash)
+corr = np.array([
+    [1.0, 0.2, 0.0],
+    [0.2, 1.0, 0.1],
+    [0.0, 0.1, 1.0]
+])
+chol = np.linalg.cholesky(corr)
+
+total_years = death_age - current_age
+
 total_years = death_age - current_age
 
 # --- Monte Carlo Engine ---
