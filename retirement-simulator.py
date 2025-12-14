@@ -120,9 +120,9 @@ sigma_eq_ln = np.sqrt(np.log(1 + (std_equity ** 2)))
 
 # Correlation & Cholesky decomposition (Equity, Bonds, Cash)
 corr = np.array([
-    [1.0, 0.2, 0.0],
-    [0.2, 1.0, 0.1],
-    [0.0, 0.1, 1.0]
+    [1.0, 0.2, 0.10],
+    [0.2, 1.0, 0.05],
+    [0.10, 0.05, 1.0]
 ])
 chol = np.linalg.cholesky(corr)
 
